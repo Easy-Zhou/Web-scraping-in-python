@@ -1,2 +1,2 @@
-# Web-scraping-in-python
-《用Python学习网络爬虫》实践
+# Web Scraping With Python
+《用Python学习网络爬虫》学习记录
