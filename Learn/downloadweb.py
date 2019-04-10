@@ -4,6 +4,7 @@
 # @File    : downloadweb
 # @Software: PyCharm
 # @Description:
+import itertools
 import re
 import urllib.request
 from urllib.error import URLError, HTTPError, ContentTooShortError
@@ -55,9 +56,29 @@ def crawl_sitemap(url):
         html = download(link)
 
 
+def crawl_site(url, max_errors=5):
+    """
+    根据 ID 爬取 用于别名抓取可以按规律进行爬取
+    :param url: 抓取的url
+    :param max_error: 最大连续错误次数
+    :return:
+    """
+    num_errors = 0
+    for page in itertools.count(1):
+        pg_url = '{}{}'.format(url, page)
+        html = download(pg_url)
+        if html is None:
+            num_errors += 1
+            if num_errors == max_errors:
+                break
+        else:
+            num_errors = 0
+
+
 # url = 'https://www.meetup.com'
 # url = 'http://httpstat.us/500'
-url = 'http://example.python-scraping.com/sitemap.xml'
-print(download(url))
-crawl_sitemap(url)
-
+# url = 'http://example.python-scraping.com/sitemap.xml'
+# print(download(url))
+# crawl_sitemap(url)
+url = 'http://example.python-scraping.com/view/-'
+crawl_site(url)
