@@ -3,8 +3,8 @@
 # @Author  : zhou
 # @File    : downloadweb
 # @Software: PyCharm
-# @Description: 
-
+# @Description:
+import re
 import urllib.request
 from urllib.error import URLError, HTTPError, ContentTooShortError
 
@@ -12,7 +12,7 @@ from urllib.error import URLError, HTTPError, ContentTooShortError
 def download(url, user_agent='wswp', num_retries=2, charset='utf-8'):
     """
     下载网页
-    :param url: 网页地址
+    :param url: 网页地址 如：https://www.baidu.com
     :param user_agent: 用户代理 default wswp
     :param num_retries: 重试下载次数 default 2
     :param charset: 网页编码方式 default utf-8
@@ -43,6 +43,21 @@ def download(url, user_agent='wswp', num_retries=2, charset='utf-8'):
     return html
 
 
+def crawl_sitemap(url):
+    """
+    网站地图爬虫
+    :param url: http://www.baidu.com
+    :return:
+    """
+    sitemap = download(url)
+    links = re.findall('<loc>(.*?)</loc>', sitemap)
+    for link in links:
+        html = download(link)
+
+
 # url = 'https://www.meetup.com'
-url = 'http://httpstat.us/500'
+# url = 'http://httpstat.us/500'
+url = 'http://example.python-scraping.com/sitemap.xml'
 print(download(url))
+crawl_sitemap(url)
+
