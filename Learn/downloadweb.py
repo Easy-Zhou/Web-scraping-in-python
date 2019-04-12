@@ -7,7 +7,9 @@
 import itertools
 import re
 import urllib.request
+from urllib import robotparser
 from urllib.error import URLError, HTTPError, ContentTooShortError
+from urllib.parse import urljoin
 
 
 def download(url, user_agent='wswp', num_retries=2, charset='utf-8'):
@@ -75,10 +77,65 @@ def crawl_site(url, max_errors=5):
             num_errors = 0
 
 
+# ---链接爬虫--- #
+def link_crawler(start_url, link_regex, robots_url=None, user_agent='wswp'):
+    """
+    从给定的start_url开始进行爬取, 并规则继续爬取匹配规则的链接
+    :param start_url:
+    :param link_regex:
+    :return:
+    """
+    if not robots_url:
+        robots_url = '{}/robots.txt'.format(start_url)
+    rp = get_robots_parser(robots_url) # 获取robot.txt 的parser(解析器)
+    crawl_queue = [start_url]
+    seen = set(crawl_queue)  # 设置以抓取过的页面记录，防止重复抓取
+    while crawl_queue:
+        url = crawl_queue.pop()
+        if rp.can_fetch(user_agent,url):  # 如果指定的代理能够访问网页
+            html = download(url)
+            if html is None:
+                continue
+            # filter for links matching our regular expression
+            for link in get_links(html):
+                if re.search(link_regex, link) and not re.search('(login\?|register\?)',link):
+                    # 生成绝对路径，方式被相对路径打断抓取
+                    abs_link = urljoin(start_url, link)
+                    if abs_link not in seen:  # 判断此链接是否已被抓取过
+                        seen.add(abs_link)
+                        crawl_queue.append(abs_link)
+        else:
+            print('Blocked by robots.txt:', url)
+
+
+def get_links(html):
+    """
+    返回一个从html中获取的链接列表
+    :param html:
+    :return:
+    """
+    # webpage_regex = re.compile("""<a[^>] + href=["'](.*?)["']""", re.IGNORECASE)  # 忽略大小写 相当于re.I
+    webpage_regex = re.compile("""<a href=["'](.*?)["']""", re.IGNORECASE)  # 忽略大小写 相当于re.I
+    return webpage_regex.findall(html)
+
+
+# ---链接爬虫--- #
+
+def get_robots_parser(robots_url):
+    """ return the robots parser object using the robots_url"""
+    rp = robotparser.RobotFileParser()
+    rp.set_url(robots_url)
+    rp.read()
+    return rp
+
+
 # url = 'https://www.meetup.com'
 # url = 'http://httpstat.us/500'
 # url = 'http://example.python-scraping.com/sitemap.xml'
 # print(download(url))
 # crawl_sitemap(url)
-url = 'http://example.python-scraping.com/view/-'
-crawl_site(url)
+# url = 'http://example.python-scraping.com/view/-'
+# crawl_site(url)
+url = 'http://example.python-scraping.com'
+link_regex = '/(index|view)(/|)'
+link_crawler(url, link_regex)
